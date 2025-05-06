@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
@@ -28,6 +27,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <fstream>
 
 #ifdef _MSC_VER
@@ -45,7 +45,7 @@ static unsigned getLogTopics();
 const size_t LENGTH_PID = 5;
 const size_t LENGTH_THREAD = 8;
 const size_t LENGTH_FILE = 29;
-const size_t LENGTH_TIME = 6;
+const size_t LENGTH_TIME = 20;
 
 namespace
 {
@@ -94,7 +94,7 @@ LogGlobals& globals()
     static LogGlobals global;
     return global;
 }
-}
+} // namespace
 
 namespace detail
 {
@@ -158,16 +158,20 @@ protected:
         {
             if (!_noHeader)
             {
+                // Get current time
+                time_t now = time(nullptr);
+                struct tm* timeinfo = localtime(&now);
+                char timeStr[32];
+                strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S",
+                         timeinfo);
+
                 if (lunchbox::Log::level > LOG_INFO)
                     _stringStream << std::right << std::setw(LENGTH_PID)
                                   << getpid() << "." << std::left
                                   << std::setw(LENGTH_THREAD) << _thread << " "
-                                  << _file << " " << std::right
-                                  << std::setw(LENGTH_TIME)
-                                  << globals().clock->getTime64() << " ";
+                                  << _file << " " << timeStr << " ";
                 else
-                    _stringStream << std::right << std::setw(LENGTH_TIME)
-                                  << globals().clock->getTime64() << " ";
+                    _stringStream << timeStr << " ";
             }
 
             for (int i = 0; i < _indent; ++i)
@@ -223,7 +227,7 @@ private:
     /** The wrapped ostream. */
     std::ostream& _stream;
 };
-}
+} // namespace detail
 
 int Log::level = Log::getLogLevel(getenv("LB_LOG_LEVEL"));
 unsigned Log::topics = getLogTopics();
@@ -353,7 +357,7 @@ Log& Log::instance()
             *log << std::setw(LENGTH_PID) << std::right << "PID"
                  << "." << std::setw(LENGTH_THREAD) << std::left << "Thread "
                  << "|" << std::setw(LENGTH_FILE + 5) << " Filename:line "
-                 << "|" << std::right << std::setw(LENGTH_TIME) << " ms "
+                 << "|" << std::setw(LENGTH_TIME) << " ms "
                  << "|"
                  << " Message" << std::endl;
             log->enableFlush();
@@ -487,4 +491,4 @@ std::ostream& enableHeader(std::ostream& os)
         log->enableHeader();
     return os;
 }
-}
+} // namespace lunchbox
