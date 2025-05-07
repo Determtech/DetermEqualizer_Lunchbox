@@ -45,7 +45,7 @@ static unsigned getLogTopics();
 const size_t LENGTH_PID = 5;
 const size_t LENGTH_THREAD = 8;
 const size_t LENGTH_FILE = 29;
-const size_t LENGTH_TIME = 20;
+const size_t LENGTH_TIME = 24;
 
 namespace
 {
@@ -162,8 +162,17 @@ protected:
                 time_t now = time(nullptr);
                 struct tm* timeinfo = localtime(&now);
                 char timeStr[32];
-                strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S",
-                         timeinfo);
+
+                // Format time string, including milliseconds (3 digits)
+                // strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S",
+                // timeinfo);
+                snprintf(timeStr, sizeof(timeStr),
+                         "%04d-%02d-%02d %02d:%02d:%02d:%03ld",
+                         timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+                         timeinfo->tm_mday, timeinfo->tm_hour, timeinfo->tm_min,
+                         timeinfo->tm_sec,
+                         static_cast<long>(globals().clock->getTime64() %
+                                           1000));
 
                 if (lunchbox::Log::level > LOG_INFO)
                     _stringStream << std::right << std::setw(LENGTH_PID)
@@ -357,7 +366,7 @@ Log& Log::instance()
             *log << std::setw(LENGTH_PID) << std::right << "PID"
                  << "." << std::setw(LENGTH_THREAD) << std::left << "Thread "
                  << "|" << std::setw(LENGTH_FILE + 5) << " Filename:line "
-                 << "|" << std::setw(LENGTH_TIME) << " ms "
+                 << "|" << std::setw(LENGTH_TIME) << " Time "
                  << "|"
                  << " Message" << std::endl;
             log->enableFlush();
