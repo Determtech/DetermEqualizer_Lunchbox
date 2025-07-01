@@ -22,7 +22,10 @@
 #include <lunchbox/scopedMutex.h> // used inline
 #include <lunchbox/types.h>
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+
 #include <boost/bind.hpp>
+
 #include <condition_variable>
 #include <errno.h>
 #include <functional>
@@ -47,6 +50,7 @@ class Monitor
 {
     typedef void (Monitor<T>::*bool_t)() const;
     void bool_true() const {}
+
 public:
     /** Construct a new monitor with a default value of 0. @version 1.0 */
     Monitor()
@@ -444,7 +448,7 @@ inline Monitor<bool>& Monitor<bool>::operator|=(const bool& value)
     }
     return *this;
 }
-}
+} // namespace lunchbox
 
 #include <servus/uint128_t.h>
 namespace lunchbox
@@ -453,6 +457,6 @@ template <>
 inline Monitor<servus::uint128_t>::Monitor()
 {
 }
-}
+} // namespace lunchbox
 
 #endif // LUNCHBOX_MONITOR_H
