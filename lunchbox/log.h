@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2005-2017, Stefan Eilemann <eile@equalizergraphics.com>
  *                          Daniel Nachbaur <danielnachbaur@gmail.com>
  *
@@ -42,7 +41,7 @@ namespace lunchbox
 enum LogLevel
 {
     LOG_ERROR = 1,        //!< Output critical errors and warnings
-    LOG_WARN = LOG_ERROR, //!< @deprecated
+    LOG_WARN , //!< @deprecated
     LOG_INFO,             //!< Output informational messages
     LOG_DEBUG,            //!< Output debugging information
     LOG_VERB,             //!< Be noisy
@@ -57,6 +56,25 @@ enum LogTopic
     LOG_CUSTOM = 0x10,    //!< Log topics for other namespaces start here
     LOG_ANY = 0xffffu     //!< Log all Lunchbox topics
 };
+
+/** Color support for logging. @version 1.0 */
+namespace LogColor
+{
+    const std::string RESET = "\033[0m";
+    const std::string RED = "\033[31m";
+    const std::string GREEN = "\033[32m";
+    const std::string YELLOW = "\033[33m";
+    const std::string BLUE = "\033[34m";
+    const std::string CYAN = "\033[36m";
+    const std::string BOLD = "\033[1m";
+    
+    // Log level specific colors
+    const std::string ERROR_COLOR = "\033[1;31m";   // Bold Red
+    const std::string WARN_COLOR = "\033[1;33m";    // Bold Yellow
+    const std::string INFO_COLOR = "\033[32m";      // Green
+    const std::string DEBUG_COLOR = "\033[36m";     // Cyan
+    const std::string VERB_COLOR = "\033[35m";      // Magenta
+}
 
 namespace detail
 {
@@ -93,17 +111,35 @@ public:
     /** Re-enable prefix printing for subsequent new lines. @version 1.0 */
     LUNCHBOX_API void enableHeader();
 
+    /** Enable color output for log levels. @version 1.0 */
+    LUNCHBOX_API void enableColor();
+
+    /** Disable color output for log levels. @version 1.0 */
+    LUNCHBOX_API void disableColor();
+
+    /** Check if color output is enabled. @version 1.0 */
+    LUNCHBOX_API bool isColorEnabled() const;
+
+    /** Set the current log level for color output. @version 1.0 */
+    LUNCHBOX_API void setCurrentLogLevel(LogLevel level);
+
     /** The current log level. */
     static LUNCHBOX_API int level;
 
     /** The current log topics. */
     static LUNCHBOX_API unsigned topics;
 
+    /** Global color enable/disable flag. */
+    static LUNCHBOX_API bool colorEnabled;
+
     /** The per-thread logger. */
     static LUNCHBOX_API Log& instance();
 
     /** The per-thread logger. */
     static LUNCHBOX_API Log& instance(const char* file, const int line);
+
+    /** The per-thread logger with log level for coloring. */
+    static LUNCHBOX_API Log& instance(const char* file, const int line, LogLevel logLevel);
 
     /** Exit the log instance for the current thread. */
     static LUNCHBOX_API void exit();
@@ -125,6 +161,12 @@ public:
 
     /** Get the current output stream. @internal */
     static LUNCHBOX_API std::ostream& getOutput();
+
+    /** Enable/disable color output globally. @version 1.0 */
+    static LUNCHBOX_API void setColorEnabled(bool enabled);
+
+    /** Check if colors are supported on current terminal. @version 1.0 */
+    static LUNCHBOX_API bool supportsColor();
 
     /**
      * Set the reference clock.
@@ -192,27 +234,27 @@ inline std::ostream& stopBlock(std::ostream& os)
 /** Output an error message to the per-thread Log stream. @version 1.0 */
 #define LBERROR                                      \
     (lunchbox::Log::level >= lunchbox::LOG_ERROR) && \
-        lunchbox::Log::instance(__FILE__, __LINE__)
+        lunchbox::Log::instance(__FILE__, __LINE__, lunchbox::LOG_ERROR)
 /** @deprecated */
 #define LBWARN LBERROR
 /** Output an informational message to the per-thread Log. @version 1.0 */
 #define LBINFO                                      \
     (lunchbox::Log::level >= lunchbox::LOG_INFO) && \
-        lunchbox::Log::instance(__FILE__, __LINE__)
+        lunchbox::Log::instance(__FILE__, __LINE__, lunchbox::LOG_INFO)
 /** Output a warning message to the per-thread Log stream. @version 1.0 */
 #define LBDEBUG                                      \
     (lunchbox::Log::level >= lunchbox::LOG_DEBUG) && \
-        lunchbox::Log::instance(__FILE__, __LINE__)
+        lunchbox::Log::instance(__FILE__, __LINE__, lunchbox::LOG_DEBUG)
 
 #ifdef NDEBUG
 #define LBVERB \
     if (false) \
-    lunchbox::Log::instance(__FILE__, __LINE__)
+    lunchbox::Log::instance(__FILE__, __LINE__, lunchbox::LOG_VERB)
 #else
 /** Output a verbatim message to the per-thread Log stream. @version 1.0 */
 #define LBVERB                                      \
     (lunchbox::Log::level >= lunchbox::LOG_VERB) && \
-        lunchbox::Log::instance(__FILE__, __LINE__)
+        lunchbox::Log::instance(__FILE__, __LINE__, lunchbox::LOG_VERB)
 #endif
 
 /**
